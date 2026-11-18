@@ -43,7 +43,21 @@ frontend/
 
 ## Run it locally
 
-### 1. PostgreSQL
+### One-click start on this machine
+
+Double-click **`start.bat`** in the project root. It opens two terminals (API + web server) and then opens the app in your browser. Close those two terminals to stop the servers.
+
+| Service | Address |
+| --- | --- |
+| Frontend | http://localhost:5190 |
+| API health check | http://localhost:5057/api/v1/health |
+| PostgreSQL | `localhost:1231`, database `bukahub_db` |
+
+The launcher uses the portable Node.js install at `C:\Users\DELL\AppData\Local\Programs\node-v26.13.1-win-x64` and falls back to `npm` on your PATH. PostgreSQL must be running (its Windows service is `postgresql-x64-18`).
+
+### Manual setup / first-time setup
+
+#### 1. PostgreSQL
 
 Create a dedicated database (the app creates its own tables and seed rows on first start):
 
