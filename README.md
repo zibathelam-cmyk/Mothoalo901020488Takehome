@@ -1,171 +1,112 @@
-# Web Application Development - Library Manager (BIWA2110)
+# BukaHub — Library Desk
 
-This repository contains a React frontend and Express + PostgreSQL backend for the individual assignment, matching the required technology stack.
+A small community-library circulation system built for the Web Application Development lab test.
 
-## Project Structure
+- **Frontend:** React (Vite, JSX, hooks, React Router, Fetch API)
+- **Backend:** Express REST API
+- **Database:** PostgreSQL (books, members and a stock-movement ledger)
 
-- `frontend/` - React app (Vite, JSX, components, hooks, React Router, Fetch API)
-- `backend/` - Express.js REST API with PostgreSQL database integration
+## What it does
 
-## Requirements Covered
+| Area | Features |
+| --- | --- |
+| Overview | Live catalogue totals, low-stock watchlist, recent movement timeline |
+| Catalogue | Add / edit / delete books, search, genre filter, stock status |
+| Stock movements | Receive copies or record a loan, with a full ledger |
+| Members | Register, edit and remove members (admin only), role-based access |
+| Sign in | Membership number + passphrase, session kept in `sessionStorage` |
 
-- **React frontend:** `useState`, `useEffect`, reusable components, controlled forms with validation, React Router navigation, Fetch API CRUD integration
-- **Express backend:** RESTful CRUD routes for `/books`, `/transactions`, `/users`, plus `/login`
-- **Database (PostgreSQL):** stores books, users, and transaction records; tracks stock levels and borrowing/stock history
-- **Middleware:** `express.json()` and `cors`
-- **Features:** book management, availability/stock transactions, user management/login, dashboard with low-stock highlighting (< 2 copies)
+A book is flagged **needs restocking** when its copies are below `LOW_STOCK_THRESHOLD` (default `2`).
 
-## Prerequisites
+## Project layout
 
-- Node.js and npm
-- **PostgreSQL** server running and accessible
+```
+backend/
+  src/
+    app.js               Express app, middleware and route mounting
+    server.js            Database bootstrap and HTTP listener
+    config.js            Environment configuration
+    db.js                pg pool, SQL init, transaction helper
+    init.sql             Tables and indexes
+    security.js          scrypt passphrase hashing
+    validation.js        Request validation helpers
+    errors.js            HTTP errors and central error handler
+    routes/              auth, books, users, transactions
+frontend/
+  src/
+    api/client.js        Fetch wrapper (unwraps the API's `data` envelope)
+    state/AppContext.jsx Session, toasts, threshold and refresh revision
+    components/          App shell, nav, modal, fields, tiles, toasts
+    pages/               SignIn, Overview, Catalogue, Movements, Members
+    styles/              tokens, base, shell, pages
+```
 
-## Backend Setup (Express + PostgreSQL)
+## Run it locally
 
-1. Create a PostgreSQL database (example: `library_db`).
-2. Configure environment variables:
-   ```bash
-   cd backend
-   copy .env.example .env
-   ```
-   Edit `backend/.env` and set `DATABASE_URL` (or the individual `DB_*` variables) to your PostgreSQL credentials.
-3. Install dependencies and start the server:
-   ```bash
-   npm install
-   npm start
-   ```
-   - API runs on `http://localhost:5000` by default.
-   - On startup, `backend/schema.sql` is applied automatically (creates tables and seeds a default admin user).
+### 1. PostgreSQL
 
-**Default admin login:** Membership ID `ADMIN001`, Password `admin123`
+Create a dedicated database (the app creates its own tables and seed rows on first start):
 
-## Frontend Setup (React)
+```powershell
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -h localhost -p 1231 -U postgres -c "CREATE DATABASE bukahub_db;"
+```
 
-```bash
+### 2. Backend
+
+```powershell
+cd backend
+npm install
+copy .env.example .env
+```
+
+Edit `.env` and replace `YOUR_PASSWORD` with your PostgreSQL password. Then:
+
+```powershell
+npm start
+```
+
+The API listens on **http://localhost:5057**.
+
+### 3. Frontend
+
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
 
-- Dev server runs on `http://localhost:5173` by default.
-- Frontend API base: `http://localhost:5000/api` (override with `VITE_API_BASE` in `frontend/.env` if needed).
+Open **http://localhost:5190**. The Vite dev server proxies `/api` to port 5057.
 
-## API Endpoints
+## Desk account
 
-- `POST /api/login`
-- `GET, POST /api/books` | `PUT, DELETE /api/books/:id`
-- `GET, POST /api/transactions`
-- `GET, POST /api/users` | `PUT, DELETE /api/users/:id`
-- `GET /api/health`
+| Field | Value |
+| --- | --- |
+| Membership number | `CIRC-7420` |
+| Passphrase | `deskPass!26` |
+| Role | admin |
 
-## How to Track Data in the Database (PostgreSQL)
+A sample member account is also seeded: `MEM-1042` / `reader321`.
 
-You can inspect the PostgreSQL database directly to track users, books, stock levels, and transaction/borrowing activity.
+Change the seeded admin passphrase by setting `CIRCULATOR_PASSWORD` in `backend/.env` **before** the first start.
 
-### 1. Make sure PostgreSQL is running
-- Ensure the PostgreSQL service is running (e.g. `postgresql-x64-18`).
-- The backend must be configured with valid credentials in `backend/.env` (database: `library_db`).
+## API
 
-### 2. Connect to the database
-**Option A – SQL Shell (psql):** open **SQL Shell (psql)** from the Start menu and enter:
-- Server: `localhost`
-- Database: `library_db`
-- Port: `5432`
-- Username: `postgres`
-- Password: *(your PostgreSQL password)*
+All responses use `{ "data": ... }`; errors use `{ "error": { "message", "code" } }`.
 
-**Option B – PowerShell/Command Prompt:**
-```powershell
-psql -h localhost -p 5432 -U postgres -d library_db
-```
-If `psql` is not recognized, use the full path (adjust version if needed):
-```powershell
-& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -h localhost -p 5432 -U postgres -d library_db
-```
-A successful connection shows: `library_db=#`
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/health` | Service check |
+| GET | `/api/v1/meta` | Low-stock threshold |
+| POST | `/api/v1/auth/signin` | Sign in |
+| GET / POST | `/api/v1/books` | List / add books |
+| GET / PATCH / DELETE | `/api/v1/books/:id` | Read / update / remove a book |
+| GET / POST | `/api/v1/users` | List / register members |
+| GET / PATCH / DELETE | `/api/v1/users/:id` | Read / update / remove a member |
+| GET / POST | `/api/v1/transactions` | Ledger / record a movement |
+| GET / PATCH / DELETE | `/api/v1/transactions/:id` | Read / edit the note / remove a movement (reverses its stock effect) |
 
-### 3. View tables and structure
-```sql
-\dt                 -- list tables (users, books, transactions)
-\d users            -- view users columns
-\d books            -- view books columns
-\d transactions     -- view transactions columns
-```
+Posting a movement with `direction: "IN"` or `"OUT"` updates `copies_on_hand` inside a database transaction, so stock cannot go negative.
 
-### 4. Useful tracking queries
-**All users:**
-```sql
-SELECT id, name, membership_id, role, created_at
-FROM users
-ORDER BY id;
-```
+## Visual direction
 
-**Track user activity/transactions (who did what, when, to which book):**
-```sql
-SELECT
-  t.id,
-  t.created_at,
-  t.type,
-  t.quantity,
-  u.name AS user_name,
-  u.membership_id,
-  b.title AS book_title,
-  b.quantity AS current_stock,
-  t.note
-FROM transactions t
-LEFT JOIN users u ON t.user_id = u.id
-LEFT JOIN books b ON t.book_id = b.id
-ORDER BY t.created_at DESC, t.id DESC;
-```
-
-**Activity for a specific user (replace membership ID):**
-```sql
-SELECT t.created_at, u.name, u.membership_id, t.type, t.quantity, b.title, t.note
-FROM transactions t
-JOIN users u ON t.user_id = u.id
-JOIN books b ON t.book_id = b.id
-WHERE u.membership_id = 'MEM001'
-ORDER BY t.created_at DESC;
-```
-
-**Current book stock / low stock (< 2):**
-```sql
-SELECT id, title, author, isbn, quantity,
-       CASE WHEN quantity < 2 THEN 'LOW STOCK' ELSE 'OK' END AS status
-FROM books
-ORDER BY quantity ASC, title;
-```
-
-**Transaction history for a specific book (replace ISBN):**
-```sql
-SELECT t.created_at, b.title, t.type, t.quantity, u.name AS performed_by, t.note
-FROM transactions t
-JOIN books b ON t.book_id = b.id
-LEFT JOIN users u ON t.user_id = u.id
-WHERE b.isbn = '9780132350884'
-ORDER BY t.created_at DESC;
-```
-
-### 5. Demo tip
-Perform an action in the app (e.g. login, add/deduct stock, add/update user), then rerun the relevant query to show the change recorded in the database. Use `\q` to exit `psql`.
-
-## Notes
-
-- A running PostgreSQL instance and correct credentials in `backend/.env` are required for the backend to start and for the frontend to fetch data.
-- Use the Vite dev server (`npm run dev`) to run the frontend; do not open `index.html` directly with a static live server.
-## Screenshots
-
-### Login
-![Login](screenshots/log_in.png)
-
-### Dashboard
-![Dashboard](screenshots/dashboard.png)
-
-### Book Management
-![Book Management](screenshots/book_management.png)
-
-### Transactions
-![Transactions](screenshots/transactions.png)
-
-### User Management
-![User Management](screenshots/user_management.png)
+Warm paper canvas (`#f6f4ef`) with deep indigo (`#4b32b3`) and amber (`#d77d1d`) accents. Genres get their own colour chips (violet for Technology, plum for Cultural Studies, olive for History, amber for Business, rose for Poetry). Starter titles include *Motseng oa Lithaba*, *The Mountain Kingdom*, *Poems from the Maluti* and *Web Applications with React*.

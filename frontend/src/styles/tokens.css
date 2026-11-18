@@ -1,0 +1,46 @@
+:root {
+  --canvas: #f6f4ef;
+  --surface: #fffdf9;
+  --surface-alt: #efebe2;
+  --ink: #241e4a;
+  --ink-soft: #4a4568;
+  --muted: #7b7691;
+  --line: #e5dfd4;
+  --line-strong: #d4ccbd;
+
+  --brand: #4b32b3;
+  --brand-dark: #35207f;
+  --brand-soft: #ece7ff;
+  --amber: #d77d1d;
+  --amber-soft: #fff0dc;
+  --violet: #6c4bd6;
+  --violet-soft: #eee8ff;
+  --mint: #1c8c68;
+  --mint-soft: #e0f4ec;
+  --blue: #2b6cb0;
+  --blue-soft: #e5f0fb;
+  --rose: #c04a72;
+  --rose-soft: #fbe7ee;
+  --olive: #6d7b2f;
+  --olive-soft: #eef2dc;
+  --plum: #8c3d78;
+  --plum-soft: #f7e6f2;
+  --danger: #c23b4e;
+  --danger-soft: #fde8eb;
+
+  --radius-lg: 18px;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 14px 34px rgba(36, 30, 74, 0.08);
+  --side-width: 244px;
+  --serif: Georgia, 'Times New Roman', serif;
+}
+
+.tone-violet { --tone: var(--violet); --tone-bg: var(--violet-soft); }
+.tone-amber { --tone: var(--amber); --tone-bg: var(--amber-soft); }
+.tone-mint { --tone: var(--mint); --tone-bg: var(--mint-soft); }
+.tone-blue { --tone: var(--blue); --tone-bg: var(--blue-soft); }
+.tone-rose { --tone: var(--rose); --tone-bg: var(--rose-soft); }
+.tone-olive { --tone: var(--olive); --tone-bg: var(--olive-soft); }
+.tone-plum { --tone: var(--plum); --tone-bg: var(--plum-soft); }
+.tone-slate { --tone: var(--ink-soft); --tone-bg: var(--surface-alt); }
